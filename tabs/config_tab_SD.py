@@ -6,7 +6,7 @@ def render_config_tab(gs_manager):
     st.header("⚙️ Configuration")
 
     # GENERAL SETTINGS
-    with st.expander("👀 General Settings", expanded=False):
+    with st.expander("👀 General Settings", expanded=True):
         config_df = gs_manager.get_config()
         
         # General settings usually has fixed keys, but we'll allow dynamic rows if you want to add new config keys
@@ -31,7 +31,7 @@ def render_config_tab(gs_manager):
             st.rerun()
 
     # BEVERAGE TYPES
-    with st.expander("🥤 Beverage Types", expanded=False):
+    with st.expander("🥤 Beverage Types", expanded=True):
         st.info("💡 Scroll to the bottom of the table and click (+) to add a new drink type.")
         types_df = gs_manager.get_beverage_types()
         
