@@ -4,7 +4,24 @@ from tabs.add_tab_DC import render_add_tab
 from tabs.logs_tab_DC import render_logs_tab
 from tabs.config_tab_DC import render_config_tab
 
-st.set_page_config(page_title="Liquid Tracker", page_icon="💧")
+def check_password():
+    """Returns True if the user had the correct password."""
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input("Please enter the passcode", type="password", key="password_input")
+        if st.button("Unlock App"):
+            if st.session_state["password_input"] == st.secrets["APP_PASSWORD"]["pwd"]:
+                st.session_state["password_correct"] = True
+                st.rerun()
+            else:
+                st.error("😕 Password incorrect")
+        return False
+    return True
+
+st.set_page_config(page_title="Liquid Tracker - WaiZui", page_icon="💧")
+
+if not check_password():
+    st.stop()  # Stop the rest of the app from running
 
 # Initialize Session State for the Spreadsheet Manager (Prevents re-auth on every click)
 if 'gs_manager' not in st.session_state:

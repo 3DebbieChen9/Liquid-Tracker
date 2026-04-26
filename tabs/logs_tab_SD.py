@@ -87,7 +87,7 @@ def render_logs_tab(gs_manager, df):
         with st.expander(f"📝 Editing: {row_data['Beverage Type']} at {row_data['Timestamp'].strftime('%H:%M')}", expanded=True):
             render_edit_form(gs_manager, row_data, row_data.name)
     else:
-        st.info("💡 Tap the circle next to a row to edit that entry.")
+        st.info("💡 Tap the checkbox next to a row to edit that entry.")
 
 
 def render_edit_form(gs_manager, row_data, sheet_row):
@@ -100,7 +100,8 @@ def render_edit_form(gs_manager, row_data, sheet_row):
     with st.form("edit_form"):
         u_timestamp = st.datetime_input(
             "Timestamp",
-            row_data['Timestamp']
+            row_data['Timestamp'],
+            step = 60
         )
         col3, col4 = st.columns(2)
         u_type = col3.selectbox("Type", options=types, index=types.index(row_data['Beverage Type']))
