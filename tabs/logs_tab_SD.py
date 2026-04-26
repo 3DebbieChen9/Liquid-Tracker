@@ -32,20 +32,18 @@ def render_logs_tab(gs_manager, df):
     today_df = df[df['Timestamp'].dt.date == today_date]
     current_intake = today_df['Water Amount (ml)'].sum()
 
-    # Calculate percentage
-    progress_percentage = current_intake / daily_goal
-    
     # UI Display
     col1, col2 = st.columns([3, 1])
     col1.write(f"🎯 Daily Goal Progress: {current_intake}ml / {daily_goal}ml")
     
     # Change color based on progress (Logic for metric)
     status_color = "normal" if current_intake < daily_goal else "inverse"
-    col2.metric("Status", f"{int(progress_percentage * 100)}%", delta_color=status_color)
+    col2.metric("Status", f"{int(current_intake / daily_goal * 100)}%", delta_color=status_color)
     
+    # Calculate percentage (0.0 to 1.0)
+    progress_percentage = min(current_intake / daily_goal, 1.0)
     # The Progress Bar
     st.progress(progress_percentage)
-    
     if progress_percentage >= 1.0:
         st.success("🙌 Target Reached! You're fully hydrated! 🌊")
     
