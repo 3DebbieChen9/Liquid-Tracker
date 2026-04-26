@@ -2,13 +2,16 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import time
+import pytz
 
 def render_logs_tab(gs_manager, df):
     st.header("📋 Activity Logs")
     
     # 1. Fetch data
     config_df = gs_manager.get_config()
-    
+    user_tz_string = config_df.loc[config_df['Key'] == 'Timezone', 'Value'].values[0]
+    local_tz = pytz.timezone(user_tz_string)
+
     if df.empty:
         st.info("👀 No logs found yet. Go to the 'Add' tab to log your first drink!")
         return

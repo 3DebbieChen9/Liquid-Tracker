@@ -1,8 +1,8 @@
 import streamlit as st
-from google_sheets import SpreadsheetManager
-from tabs.add_tab import render_add_tab
-from tabs.logs_tab import render_logs_tab
-from tabs.config_tab import render_config_tab
+from google_sheets_SD import SpreadsheetManager
+from tabs.add_tab_SD import render_add_tab
+from tabs.logs_tab_SD import render_logs_tab
+from tabs.config_tab_SD import render_config_tab
 
 st.set_page_config(page_title="Liquid Tracker", page_icon="💧")
 
@@ -19,7 +19,6 @@ if 'active_tab' not in st.session_state:
 
 # 2. Create the "Fake Tabs" using Segmented Control
 # This looks like tabs but allows us to programmatically change it
-
 # Only sync the widget when a programmatic tab switch was requested
 if st.session_state.get("pending_tab_switch"):
     st.session_state["nav_widget"] = st.session_state.active_tab

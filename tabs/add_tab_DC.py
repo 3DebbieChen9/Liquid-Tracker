@@ -1,13 +1,18 @@
 import streamlit as st
 from datetime import datetime
+from streamlit_extras.no_default_selectbox import find_selected_working_day
 import time
+import pytz
 
 def render_add_tab(gs_manager):
     st.header("➕ New Drink")
-    
+
     types_df = gs_manager.get_beverage_types()
     sources_df = gs_manager.get_beverage_sources()
     config_df = gs_manager.get_config()
+    
+    user_tz_string = config_df.loc[config_df['Key'] == 'Timezone', 'Value'].values[0]
+    local_tz = pytz.timezone(user_tz_string)
 
     types = types_df['Type'].dropna().unique().tolist()
     sources = sources_df['Source'].dropna().unique().tolist()
@@ -16,8 +21,8 @@ def render_add_tab(gs_manager):
 
     with st.form("add_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
-        date_val = col1.date_input("Date", datetime.now())
-        time_val = col2.time_input("Time", datetime.now(), step = 60)
+        date_val = col1.date_input("Date", datetime.now(local_tz))
+        time_val = col2.time_input("Time", datetime.now(local_tz), step = 60)
         
         col3, col4 = st.columns(2)
         bev_type = col3.selectbox("Beverage Type", options=types)
