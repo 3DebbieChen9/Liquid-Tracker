@@ -32,8 +32,8 @@ def render_logs_tab(gs_manager, df):
     today_df = df[df['Timestamp'].dt.date == today_date]
     current_intake = today_df['Water Amount (ml)'].sum()
 
-    # Calculate percentage (0.0 to 1.0)
-    progress_percentage = min(current_intake / daily_goal, 1.0)
+    # Calculate percentage
+    progress_percentage = current_intake / daily_goal
     
     # UI Display
     col1, col2 = st.columns([3, 1])
