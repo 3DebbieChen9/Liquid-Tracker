@@ -7,10 +7,11 @@ from tabs.config_tab import render_config_tab
 st.set_page_config(page_title="Liquid Tracker", page_icon="💧")
 
 # Initialize Session State for the Spreadsheet Manager (Prevents re-auth on every click)
-if 'gs' not in st.session_state:
-    sheet_name = st.secrets["gsheets"]["sheet_name"]
-    manager = SpreadsheetManager(st.secrets["gcp_service_account"], sheet_name)
-    # st.session_state.gs = SpreadsheetManager("credentials.json", "Liquid Tracker")
+if 'gs_manager' not in st.session_state:
+    with st.spinner("Connecting to Google Sheets..."):
+        st.session_state.gs_manager = SpreadsheetManager()
+
+gs_manager = st.session_state.gs_manager
 
 # 1. This variable controls which "Tab" is highlighted
 if 'active_tab' not in st.session_state:
@@ -42,9 +43,9 @@ if nav_option:
 # 4. Render based on active_tab
 if st.session_state.active_tab == "📋 Logs":
     with st.spinner("Refreshing logs..."):
-        logs_df = st.session_state.gs.get_logs() 
-    render_logs_tab(st.session_state.gs, logs_df)
+        logs_df = st.session_state.gs_manager.get_logs()
+    render_logs_tab(st.session_state.gs_manager, logs_df)
 elif st.session_state.active_tab == "➕ New Drink":
-    render_add_tab(st.session_state.gs)
+    render_add_tab(st.session_state.gs_manager)
 elif st.session_state.active_tab == "⚙️ Config":
-    render_config_tab(st.session_state.gs)
+    render_config_tab(st.session_state.gs_manager)

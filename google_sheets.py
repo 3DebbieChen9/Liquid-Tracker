@@ -4,13 +4,15 @@ import pandas as pd
 import streamlit as st
 
 class SpreadsheetManager:
-    def __init__(_self, json_keyfile, sheet_name):
+    def __init__(_self):
         scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
         
-        # [DEBUG] For local testing, we can use the JSON file directly. In production (Streamlit Cloud), we use st.secrets.
-        creds = ServiceAccountCredentials.from_json_keyfile_name(json_keyfile, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(
+            st.secrets["gcp_service_account"], 
+            scope
+        )
         _self.client = gspread.authorize(creds)
-        _self.workbook = _self.client.open(sheet_name)
+        _self.workbook = _self.client.open(st.secrets["gsheets"]["sheet_name"])
         _self.log_sheet = _self.workbook.worksheet("Logs")
         _self.beveragetypes_sheet = _self.workbook.worksheet("BeverageTypes")
         _self.beveragesource_sheet = _self.workbook.worksheet("BeverageSources")
