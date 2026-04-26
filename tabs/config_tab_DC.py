@@ -1,12 +1,11 @@
-# tabs/config_tab.py
-import streamlit as st
-import pandas as pd
 import time
+import pandas as pd
+import streamlit as st
 
 def render_config_tab(gs_manager):
     st.header("⚙️ Configuration")
 
-    # --- SECTION 1: GENERAL SETTINGS ---
+    # GENERAL SETTINGS
     with st.expander("👀 General Settings", expanded=True):
         config_df = gs_manager.get_config()
         
@@ -23,16 +22,16 @@ def render_config_tab(gs_manager):
         config_changes = st.session_state.get("config_editor", {})
         has_config_changes = any(config_changes.get(k) for k in ["edited_rows", "added_rows", "deleted_rows"])
         
-        c1, c2 = st.columns([4, 1])
-        if c2.button("Save Settings", key="btn_save_config", use_container_width=True, type="primary", disabled=not has_config_changes):
+        _, col_save_config = st.columns([4, 1])
+        if col_save_config.button("Save Settings", key="btn_save_config", use_container_width=True, type="primary", disabled=not has_config_changes):
             gs_manager.update_config_sheet(edited_config)
             st.cache_data.clear()
             st.toast("General Settings updated!", icon="✅")
             time.sleep(1)
             st.rerun()
 
-    # --- SECTION 2: BEVERAGE TYPES ---
-    with st.expander("☕ Beverage Types", expanded=False):
+    # BEVERAGE TYPES
+    with st.expander("🥤 Beverage Types", expanded=True):
         st.info("💡 Scroll to the bottom of the table and click (+) to add a new drink type.")
         types_df = gs_manager.get_beverage_types()
         
@@ -52,16 +51,16 @@ def render_config_tab(gs_manager):
         type_changes = st.session_state.get("types_editor", {})
         has_type_changes = any(type_changes.get(k) for k in ["edited_rows", "added_rows", "deleted_rows"])
         
-        c3, c4 = st.columns([4, 1])
-        if c4.button("Save Types", key="btn_save_types", use_container_width=True, type="primary", disabled=not has_type_changes):
+        _, col_save_type = st.columns([4, 1])
+        if col_save_type.button("Save Types", key="btn_save_types", use_container_width=True, type="primary", disabled=not has_type_changes):
             gs_manager.update_beverage_types_sheet(edited_types)
             st.cache_data.clear()
-            st.toast("Beverage Types updated!", icon="☕")
+            st.toast("Beverage Types updated!", icon="🥤")
             time.sleep(1)
             st.rerun()
 
-    # --- SECTION 3: BEVERAGE SOURCES ---
-    with st.expander("👛 Beverage Sources", expanded=False):
+    # BEVERAGE SOURCES
+    with st.expander("👛 Beverage Sources", expanded=True):
         st.info("💡 Scroll to the bottom of the table and click (+) to add a new source.")
         sources_df = gs_manager.get_beverage_sources()
         
@@ -77,8 +76,8 @@ def render_config_tab(gs_manager):
         source_changes = st.session_state.get("sources_editor", {})
         has_source_changes = any(source_changes.get(k) for k in ["edited_rows", "added_rows", "deleted_rows"])
         
-        c5, c6 = st.columns([4, 1])
-        if c6.button("Save Sources", key="btn_save_sources", use_container_width=True, type="primary", disabled=not has_source_changes):
+        _, col_save_sources = st.columns([4, 1])
+        if col_save_sources.button("Save Sources", key="btn_save_sources", use_container_width=True, type="primary", disabled=not has_source_changes):
             gs_manager.update_sources_sheet(edited_sources)
             st.cache_data.clear()
             st.toast("Beverage Sources updated!", icon="👛")

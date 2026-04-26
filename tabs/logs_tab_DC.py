@@ -1,13 +1,13 @@
-import streamlit as st
-import pandas as pd
-from datetime import datetime
 import time
 import pytz
+import pandas as pd
+import streamlit as st
+from datetime import datetime
 
 def render_logs_tab(gs_manager, df):
     st.header("📋 Activity Logs")
     
-    # 1. Fetch data
+    # Fetch data
     config_df = gs_manager.get_config()
     user_tz_string = config_df.loc[config_df['Key'] == 'Timezone', 'Value'].values[0]
     local_tz = pytz.timezone(user_tz_string)
@@ -16,42 +16,28 @@ def render_logs_tab(gs_manager, df):
         st.info("👀 No logs found yet. Go to the 'Add' tab to log your first drink!")
         return
 
-    # --- PROGRESS BAR LOGIC ---
+    # PROGRESS BAR
     daily_goal = config_df.loc[config_df['Key'] == 'Daily Goal (ml)', 'Value'].values[0] if not config_df.empty else 2000
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], errors='coerce') # Convert the single column to datetime objects safely
+    df = df.sort_values(by='Timestamp', ascending=False) # Sort by that column
+    today_date = datetime.now(local_tz).date() # Get today's date as a date object (normalized to midnight)
     
-    # 1. Convert the single column to datetime objects safely
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], errors='coerce')
-    # 2. Sort by that column
-    df = df.sort_values(by='Timestamp', ascending=False)
-    
-    # Get today's date as a date object (normalized to midnight)
-    today_date = datetime.now().date()
-    
-    # --- FILTERING ---
-    # Use .dt.date to compare only the date part, ignoring the time
-    today_df = df[df['Timestamp'].dt.date == today_date]
+    today_df = df[df['Timestamp'].dt.date == today_date] # Use .dt.date to compare only the date part, ignoring the time
     current_intake = today_df['Water Amount (ml)'].sum()
 
-    # Calculate percentage (0.0 to 1.0)
-    progress_percentage = min(current_intake / daily_goal, 1.0)
-    
-    # UI Display
-    col1, col2 = st.columns([3, 1])
-    col1.write(f"🎯 Daily Goal Progress: {current_intake}ml / {daily_goal}ml")
-    
-    # Change color based on progress (Logic for metric)
-    status_color = "normal" if current_intake < daily_goal else "inverse"
-    col2.metric("Status", f"{int(progress_percentage * 100)}%", delta_color=status_color)
-    
-    # The Progress Bar
-    st.progress(progress_percentage)
-    
+    col_progress_text, col_progress_metric = st.columns([3, 1])
+    col_progress_text.write(f"🎯 {today_date.strftime('%B %d')} Goal: {current_intake}ml / {daily_goal}ml")
+    status_color = "normal" if current_intake < daily_goal else "inverse" # Change color based on progress (Logic for metric)
+    col_progress_metric.metric(f"Progress", f"{int(current_intake / daily_goal * 100)}%", delta_color=status_color)
+
+    progress_percentage = min(current_intake / daily_goal, 1.0) # Calculate percentage (0.0 to 1.0)
+    st.progress(progress_percentage) # The Progress Bar
     if progress_percentage >= 1.0:
         st.success("🙌 Target Reached! You're fully hydrated! 🌊")
     
     st.divider()
     
-    # This enables a radio-button column on the left
+    # Logs Display
     event = st.dataframe(
         df,
         width="stretch",
@@ -79,19 +65,17 @@ def render_logs_tab(gs_manager, df):
     )
 
     selected_rows = event.selection.rows
-    
     if selected_rows:
         # Get the actual index from the DataFrame based on the selection
         # Since the DF is sorted, we use .iloc to get the right data
         selected_idx = selected_rows[0]
         row_data = df.iloc[selected_idx]
-        
-        # 3. Display the Edit Form in an Expander or Container
+        # Display the Edit Form in an Expander or Container
         st.divider()
         with st.expander(f"📝 Editing: {row_data['Beverage Type']} at {row_data['Timestamp'].strftime('%H:%M')}", expanded=True):
             render_edit_form(gs_manager, row_data, row_data.name)
     else:
-        st.info("💡 Tap the circle next to a row to edit that entry.")
+        st.info("💡 Tap the checkbox next to a row to edit that entry.")
 
 
 def render_edit_form(gs_manager, row_data, sheet_row):
@@ -100,29 +84,30 @@ def render_edit_form(gs_manager, row_data, sheet_row):
     sources_df = gs_manager.get_beverage_sources()
     
     types = types_df['Type'].tolist()
-    sources = sources_df['Source'].tolist()
+    sources = sources_df['Source'].dropna().unique().tolist()
     water_percentage = types_df.set_index('Type')['Water'].to_dict() if 'Water' in types_df.columns else {}
 
     with st.form("edit_form"):
-        col1, col2 = st.columns(2)
-        u_date = col1.date_input("Date", value=row_data['Timestamp'].date())
-        u_time = col2.time_input("Time", value=row_data['Timestamp'].time())
+        u_timestamp = st.datetime_input(
+            "Timestamp",
+            row_data['Timestamp'],
+            step = 60
+        )
+        col_bev_type, col_amount = st.columns(2)
+        u_type = col_bev_type.selectbox("Type", options=types, index=types.index(row_data['Beverage Type']) if row_data['Beverage Type'] in types else 0)
+        u_amount = col_amount.number_input("Amount (ml)", min_value=0, value=int(row_data['Amount (ml)']), step=50)
         
-        col3, col4 = st.columns(2)
-        u_type = col3.selectbox("Type", options=types, index=types.index(row_data['Beverage Type']))
-        u_amount = col4.number_input("Amount (ml)", value=int(row_data['Amount (ml)']), step=50)
-        
-        col5, col6 = st.columns(2)
-        u_bev_source = col5.selectbox("Source", options=sources, index=sources.index(row_data['Source']))
-        u_price = col6.number_input("Price ($NTD)", min_value=0, step=5, value=int(row_data['Price ($NTD)']))
-        
+        col_source, col_price = st.columns(2)
+        u_bev_source = col_source.selectbox("Source", options=sources, index=sources.index(row_data['Source']) if row_data['Source'] in sources else 0)
+        u_price = col_price.number_input("Price ($NTD)", min_value=0, step=5, value=int(row_data['Price ($NTD)']))
+
         u_note = st.text_area("Notes", value=row_data['Notes'])
 
-        col_delete, col_update = st.columns([1, 1])
+        col_update, col_delete = st.columns([1, 1])
         
         # UPDATE BUTTON
         if col_update.form_submit_button("Update Entry", use_container_width=True, type="primary"):
-            new_ts = datetime.combine(u_date, u_time).strftime("%Y-%m-%d %H:%M:%S")
+            new_ts = u_timestamp.strftime("%Y-%m-%d %H:%M:%S")
             u_water_amount = int(u_amount * float(water_percentage.get(u_type, "100%").strip('%')) / 100)
             # Prepare data for Google Sheets
             updated_row = [

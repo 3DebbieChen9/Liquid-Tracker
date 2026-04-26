@@ -1,7 +1,7 @@
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import streamlit as st
+from oauth2client.service_account import ServiceAccountCredentials
 
 class SpreadsheetManager:
     def __init__(_self):
@@ -64,12 +64,9 @@ class SpreadsheetManager:
 
     def update_beverage_types_sheet(_self, df):
         # This takes the fresh dataframe (with new rows) and overwrites the sheet
-        # 1. Prepare data (Headers + Rows)
-        data = [df.columns.values.tolist()] + df.values.tolist()
-        # 2. Wipe the old sheet so we don't have leftover data if we deleted rows
-        _self.beveragetypes_sheet.clear()
-        # 3. Write the new complete list
-        _self.beveragetypes_sheet.update('A1', data)
+        data = [df.columns.values.tolist()] + df.values.tolist() # Prepare data (Headers + Rows)
+        _self.beveragetypes_sheet.clear() # Wipe the old sheet so we don't have leftover data if we deleted rows
+        _self.beveragetypes_sheet.update('A1', data) # Update starting from A1 to overwrite the whole sheet with new data
 
     def update_sources_sheet(_self, df):
         # Overwrite the sources list

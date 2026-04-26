@@ -4,6 +4,10 @@ from tabs.add_tab_DC import render_add_tab
 from tabs.logs_tab_DC import render_logs_tab
 from tabs.config_tab_DC import render_config_tab
 
+st.set_page_config(page_title="Liquid Tracker - WaiZui", page_icon="💧")
+st.markdown("<h1 style='text-align: center; color: #3128a7;'>💧 Liquid Tracker</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; opacity: 0.8;'>Stay hydrated, stay healthy, Debbie!</p>", unsafe_allow_html=True)
+## If you want to add password protection, uncomment this section and add your password to the secrets.toml file
 # def check_password():
 #     """Returns True if the user had the correct password."""
 #     if "password_correct" not in st.session_state:
@@ -18,25 +22,12 @@ from tabs.config_tab_DC import render_config_tab
 #         return False
 #     return True
 
-st.set_page_config(page_title="Liquid Tracker - WaiZui", page_icon="💧")
-
 # if not check_password():
 #     st.stop()  # Stop the rest of the app from running
 
-# Initialize Session State for the Spreadsheet Manager (Prevents re-auth on every click)
-if 'gs_manager' not in st.session_state:
-    with st.spinner("Connecting to Google Sheets..."):
-        st.session_state.gs_manager = SpreadsheetManager()
-
-gs_manager = st.session_state.gs_manager
-
-# 1. This variable controls which "Tab" is highlighted
+# Controls which "Tab" is highlighted
 if 'active_tab' not in st.session_state:
     st.session_state.active_tab = "📋 Logs"
-
-# 2. Create the "Fake Tabs" using Segmented Control
-# This looks like tabs but allows us to programmatically change it
-
 # Only sync the widget when a programmatic tab switch was requested
 if st.session_state.get("pending_tab_switch"):
     st.session_state["nav_widget"] = st.session_state.active_tab
@@ -47,17 +38,26 @@ nav_option = st.segmented_control(
     options=["📋 Logs", "➕ New Drink", "⚙️ Config"],
     selection_mode="single",
     key="nav_widget",
-    label_visibility="collapsed"
+    label_visibility="collapsed",
+    width="stretch"
 )
+
+# Initialize Session State for the Spreadsheet Manager (Prevents re-auth on every click)
+if 'gs_manager' not in st.session_state:
+    with st.spinner("Connecting to Google Sheets..."):
+        st.session_state.gs_manager = SpreadsheetManager()
+
+gs_manager = st.session_state.gs_manager
+
 # Default Tab is "📋 Logs"
 if "nav_widget" not in st.session_state:
     st.session_state["nav_widget"] = "📋 Logs"
 
-# 3. Update our tracker if the user manually clicks
+# Update tracke nav_tab option if the user manually clicks
 if nav_option:
     st.session_state.active_tab = nav_option
 
-# 4. Render based on active_tab
+# Render based on active_tab
 if st.session_state.active_tab == "📋 Logs":
     with st.spinner("Refreshing logs..."):
         logs_df = st.session_state.gs_manager.get_logs()

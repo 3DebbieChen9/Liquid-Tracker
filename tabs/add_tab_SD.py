@@ -1,13 +1,13 @@
+import time
+import pytz
 import streamlit as st
 from datetime import datetime
 from datetime import time as dt_time
-import time
-import pytz
 
 def render_add_tab(gs_manager):
     st.header("➕ New Drink")
 
-    # --- 1. SETUP & CONFIG ---
+    # SETUP & CONFIG
     types_df = gs_manager.get_beverage_types()
     config_df = gs_manager.get_config()
     
@@ -21,65 +21,51 @@ def render_add_tab(gs_manager):
     if "min_slider" not in st.session_state:
         st.session_state.min_slider = now_dt.minute
 
-    # --- 2. TIME SELECTION (REACTIVE) ---
+    # TIME SELECTION (REACTIVE)
     st.subheader("When?")
-    
     if st.button("⏰ Reset to Now", use_container_width=True):
         st.session_state.hour_slider = now_dt.hour
         st.session_state.min_slider = now_dt.minute
         st.rerun()
 
     date_val = st.date_input("Date", now_dt)
-
     selected_hour = st.select_slider(
-        "Select Hour",
+        "Hour",
         options=list(range(24)),
         key="hour_slider",
         format_func=lambda x: f"{x:02d}"
     )
-
     selected_minute = st.select_slider(
-        "Select Minute",
+        "Minute",
         options=list(range(60)),
         key="min_slider",
         format_func=lambda x: f"{x:02d}"
     )
-    
     time_val = dt_time(selected_hour, selected_minute)
 
-    # --- 3. BEVERAGE SELECTION (REACTIVE) ---
+    # BEVERAGE SELECTION (REACTIVE)
     st.subheader("What?")
-    
     types = types_df['Type'].dropna().unique().tolist()
     water_percentage = types_df.set_index('Type')['Water'].to_dict() if 'Water' in types_df.columns else {}
-    
-    # Defaults from config
     default_cup = int(config_df.loc[config_df['Key'] == 'Default Cup Size (ml)', 'Value'].values[0])
     default_d2o = int(config_df.loc[config_df['Key'] == 'Default D2O Cup Size (ml)', 'Value'].values[0])
 
     col_bev, col_amt = st.columns(2)
-    
     with col_bev:
-        # Changing this now triggers an immediate rerun, updating the amount below!
-        bev_type = st.selectbox("Beverage Type", options=types)
-    
-    # Calculate dynamic default
-    current_default = default_d2o if "D2O" in bev_type else default_cup
-    
+        bev_type = st.selectbox("Beverage Type", options=types) # Changing this now triggers an immediate rerun, updating the amount
+    current_default = default_d2o if "D2O" in bev_type else default_cup # Calculate dynamic default
     with col_amt:
         amount = st.number_input("Amount (ml)", min_value=0, step=10, value=current_default)
 
     note = st.text_area("Notes (Optional)", placeholder="Add a note here...")
 
-    # --- 4. CALCULATION PREVIEW (COOL UX FEATURE) ---
+    # CALCULATION PREVIEW (COOL UX FEATURE)
     percentage_str = water_percentage.get(bev_type, "100%")
     percentage_val = float(str(percentage_str).strip('%')) / 100
     calculated_water = int(amount * percentage_val)
-    
     st.info(f"💧 This will add **{calculated_water}ml** of net water to your daily goal.")
 
-    # --- 5. SAVE BUTTON ---
-    # Since we aren't using a form, we just use a standard button
+    # SAVE BUTTON
     if st.button("🚀 Save Drink Entry", use_container_width=True, type="primary"):
         with st.spinner("Writing to Google Sheets..."):
             timestamp_str = datetime.combine(date_val, time_val).strftime("%Y-%m-%d %H:%M:%S")
